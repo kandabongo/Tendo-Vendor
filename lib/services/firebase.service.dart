@@ -21,6 +21,7 @@ import 'package:fuodz/services/printer.service.dart';
 import 'package:fuodz/views/pages/home.page.dart';
 import 'package:singleton/singleton.dart';
 import 'package:localize_and_translate/localize_and_translate.dart';
+import 'package:fuodz/services/in_app_order_notification.service.dart';
 
 class FirebaseService {
   //
@@ -60,6 +61,12 @@ class FirebaseService {
       showNotification(message);
       //
       refreshOrdersList(message);
+      //directly trigger the new-order alert popup+sound on foreground receipt,
+      //instead of relying on the user tapping a system notification banner
+      final statues = ["pending","new","review","awaiting_host_approval","confirmed"];
+      if (statues.contains(message.data["status"])) {
+        InAppOrderNotificationService().handleNewOrderAlert(message.data);
+      }
     });
   }
 
@@ -284,3 +291,6 @@ class FirebaseService {
     return NotificationService.appNotificationChannel().channelKey!;
   }
 }
+
+
+
