@@ -45,7 +45,7 @@ void main() async {
       CrashlyticsService.log("App started");
 
       //font
-      await GoogleFonts.pendingFonts([GoogleFonts.plusJakartaSans()]);
+      GoogleFonts.pendingFonts([GoogleFonts.plusJakartaSans()]);
       // Run app!
       runApp(LocalizedApp(child: MyApp()));
     },
