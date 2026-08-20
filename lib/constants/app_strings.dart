@@ -49,7 +49,7 @@ class AppStrings {
   static String appCurrency = "currency";
   static String appColors = "colors";
   static String appRemoteSettings = "appRemoteSettings";
-  static String newOrderNotificationChannelKey = "new_order_channel";
+  static String newOrderNotificationChannelKey = "new_order_channel_v2";
   static String newOrderNotificationSoundSource = "resource://raw/alert_new";
   //END DON'T TOUNCH
 

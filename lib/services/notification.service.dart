@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'dart:io';
 
 import 'package:awesome_notifications/awesome_notifications.dart'
@@ -107,6 +108,8 @@ class NotificationService {
       importance: NotificationImportance.High,
       soundSource: mSoundSource,
       playSound: true,
+      enableVibration: true,
+      vibrationPattern: Int64List.fromList([0, 500, 250, 500]),
     );
   }
 
@@ -226,3 +229,5 @@ class NotificationService {
     }
   }
 }
+
+
