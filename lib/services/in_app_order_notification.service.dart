@@ -9,6 +9,7 @@ import '../widgets/bottomsheets/overlay_permission.bottomsheet.dart';
 
 class InAppOrderNotificationService {
   /// Factory method that reuse same instance automatically
+  @pragma('vm:entry-point')
   factory InAppOrderNotificationService() =>
       Singleton.lazy(() => InAppOrderNotificationService._());
 
@@ -96,6 +97,7 @@ class InAppOrderNotificationService {
   }
 
   //
+  @pragma('vm:entry-point')
   handleNewOrderAlert(notificationPayloadData) async {
     //fetch order from api
     int orderId = int.parse("${notificationPayloadData['order_id']}");
@@ -111,3 +113,5 @@ class InAppOrderNotificationService {
     );
   }
 }
+
+

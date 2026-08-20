@@ -26,6 +26,7 @@ import 'package:fuodz/services/in_app_order_notification.service.dart';
 class FirebaseService {
   //
   /// Factory method that reuse same instance automatically
+  @pragma('vm:entry-point')
   factory FirebaseService() => Singleton.lazy(() => FirebaseService._());
 
   /// Private constructor
@@ -71,6 +72,7 @@ class FirebaseService {
   }
 
   //write to notification list
+  @pragma('vm:entry-point')
   saveNewNotification(RemoteMessage? message, {String? title, String? body}) {
     //
     notificationPayloadData = message != null ? message.data : null;
@@ -104,6 +106,7 @@ class FirebaseService {
   }
 
   //
+  @pragma('vm:entry-point')
   showNotification(RemoteMessage message) async {
     if (message.notification == null && message.data["title"] == null) {
       return;
@@ -291,6 +294,9 @@ class FirebaseService {
     return NotificationService.appNotificationChannel().channelKey!;
   }
 }
+
+
+
 
 
 
