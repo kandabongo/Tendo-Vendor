@@ -44,19 +44,30 @@ class _NewOrderAlertBottomsheetState extends State<NewOrderAlertBottomsheet> {
 
   //
   void playNotificationSound() async {
+    print("DEBUG: playNotificationSound called");
     try {
       audioPlayer.stop();
     } catch (error) {
       print("Error stopping audio player");
     }
-
     //
-    await audioPlayer.setAsset(
-      "assets/audio/new_order_alert.mp3",
-      preload: true,
-    );
-    await audioPlayer.setLoopMode(LoopMode.one);
-    await audioPlayer.play();
+    try {
+      print("DEBUG: calling setAsset");
+      await audioPlayer.setAsset(
+        "assets/audio/new_order_alert.mp3",
+        preload: true,
+      );
+      print("DEBUG: setAsset succeeded");
+      await audioPlayer.setLoopMode(LoopMode.one);
+      print("DEBUG: calling play");
+      await audioPlayer.play();
+      print("DEBUG: play done, playing status:");
+      print(audioPlayer.playing);
+    } catch (error, stack) {
+      print("DEBUG: audio error:");
+      print(error);
+      print(stack);
+    }
   }
 
   void stopNotificationSound() {
@@ -156,3 +167,7 @@ class _NewOrderAlertBottomsheetState extends State<NewOrderAlertBottomsheet> {
         .h(context.percentHeight * 85);
   }
 }
+
+
+
+
