@@ -45,6 +45,7 @@ class _NewOrderAlertBottomsheetState extends State<NewOrderAlertBottomsheet> {
   //
   void playNotificationSound() async {
     print("DEBUG: playNotificationSound called");
+    await Future.delayed(const Duration(milliseconds: 800));
     try {
       audioPlayer.stop();
     } catch (error) {
@@ -167,6 +168,7 @@ class _NewOrderAlertBottomsheetState extends State<NewOrderAlertBottomsheet> {
         .h(context.percentHeight * 85);
   }
 }
+
 
 
 
