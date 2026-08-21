@@ -34,7 +34,7 @@
 
     <application
         android:name="${applicationName}"
-        android:label="Glover Vendor"
+        android:label="Tendo Vendor"
         android:requestLegacyExternalStorage="true"
         android:icon="@mipmap/launcher_icon"
         tools:replace="android:label">
