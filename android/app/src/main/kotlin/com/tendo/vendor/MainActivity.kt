@@ -1,4 +1,4 @@
-package com.twendeapp.vendor
+package com.tendo.vendor
 
 
 import android.app.NotificationChannel

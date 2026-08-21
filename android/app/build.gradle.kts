@@ -17,7 +17,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.twendeapp.vendor"
+    namespace = "com.tendo.vendor"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -27,7 +27,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.twendeapp.vendor"
+        applicationId = "com.tendo.vendor"
         minSdk = 26
         targetSdk = 36
         ndkVersion = "28.2.13676358"
