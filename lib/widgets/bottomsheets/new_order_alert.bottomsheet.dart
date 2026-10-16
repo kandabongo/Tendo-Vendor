@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:fuodz/constants/app_images.dart';
 import 'package:fuodz/constants/app_strings.dart';
 import 'package:fuodz/extensions/dynamic.dart';
@@ -8,7 +9,6 @@ import 'package:fuodz/views/pages/order/orders_details.page.dart';
 import 'package:fuodz/widgets/busy_indicator.dart';
 import 'package:fuodz/widgets/buttons/custom_button.dart';
 import 'package:fuodz/widgets/buttons/custom_text_button.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:localize_and_translate/localize_and_translate.dart';
 import 'package:velocity_x/velocity_x.dart';
 
@@ -23,8 +23,11 @@ class NewOrderAlertBottomsheet extends StatefulWidget {
 }
 
 class _NewOrderAlertBottomsheetState extends State<NewOrderAlertBottomsheet> {
-  //
-  final audioPlayer = AudioPlayer();
+  // Native alert (MediaPlayer in MainActivity) - no Flutter audio plugin needed.
+  static const MethodChannel _alertChannel = MethodChannel(
+    'notifications.manage',
+  );
+
   @override
   void initState() {
     //play after finish loading
@@ -35,47 +38,26 @@ class _NewOrderAlertBottomsheetState extends State<NewOrderAlertBottomsheet> {
   }
 
   @override
-  void dispose() async {
-    if (audioPlayer.playing) {
-      await audioPlayer.stop();
-    }
+  void dispose() {
+    stopNotificationSound();
     super.dispose();
   }
 
   //
   void playNotificationSound() async {
-    print("DEBUG: playNotificationSound called");
-    await Future.delayed(const Duration(milliseconds: 800));
     try {
-      audioPlayer.stop();
+      final ok = await _alertChannel.invokeMethod('playAlert');
+      print("DEBUG: native alert started: $ok");
     } catch (error) {
-      print("Error stopping audio player");
-    }
-    //
-    try {
-      print("DEBUG: calling setAsset");
-      await audioPlayer.setAsset(
-        "assets/audio/new_order_alert.mp3",
-        preload: true,
-      );
-      print("DEBUG: setAsset succeeded");
-      await audioPlayer.setLoopMode(LoopMode.one);
-      print("DEBUG: calling play");
-      await audioPlayer.play();
-      print("DEBUG: play done, playing status:");
-      print(audioPlayer.playing);
-    } catch (error, stack) {
-      print("DEBUG: audio error:");
-      print(error);
-      print(stack);
+      print("DEBUG: native alert error: $error");
     }
   }
 
   void stopNotificationSound() {
     try {
-      audioPlayer.stop();
+      _alertChannel.invokeMethod('stopAlert');
     } catch (error) {
-      print("Error stopping audio player");
+      print("Error stopping alert sound: $error");
     }
   }
 
