@@ -26,7 +26,7 @@ jobs:
             lib/requests/assist_job.request.dart lib/services/assist_job.service.dart \
             lib/view_models/order_details.vm.dart lib/views/pages/order/orders_details.page.dart \
             lib/views/pages/order/widgets/order_actions.dart lib/widgets/bottomsheets/new_order_alert.bottomsheet.dart \
-            lib/models/order.dart > out.txt 2>&1
+            lib/models/order.dart lib/models/assist_invoice.dart lib/requests/assist_extras.request.dart lib/views/pages/order/widgets/assist_extras.view.dart > out.txt 2>&1
           code=$?
           echo "analyze exit code: $code"
           echo "::notice title=analyze exit code::$code"
