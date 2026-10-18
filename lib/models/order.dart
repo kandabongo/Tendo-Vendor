@@ -366,6 +366,9 @@ class Order {
   /// Vendor type id of the Assist (home services) vertical.
   static const int assistVendorTypeId = 5;
 
+  /// An Assist job (home services), whoever it is assigned to.
+  bool get isAssistJob => vendorTypeId == assistVendorTypeId;
+
   /// An Assist job that has been offered to providers but not yet accepted by anyone.
   /// Such a job is accepted/declined through the dedicated Assist endpoints, which make the
   /// server the only authority on assignment and on the wallet check. Every other order
