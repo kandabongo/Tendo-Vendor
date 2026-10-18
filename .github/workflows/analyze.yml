@@ -1,0 +1,40 @@
+name: Analyze (Assist files)
+on:
+  push:
+    branches: [ci-analyze]
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.47.0"
+          channel: stable
+      - name: Write google-services.json
+        run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
+      - run: flutter pub get
+      - name: Analyze changed files; every finding becomes an annotation
+        run: |
+          flutter --version | head -2
+          set +e
+          flutter analyze --no-fatal-infos --no-fatal-warnings --format=machine \
+            lib/requests/assist_job.request.dart lib/services/assist_job.service.dart \
+            lib/view_models/order_details.vm.dart lib/views/pages/order/orders_details.page.dart \
+            lib/views/pages/order/widgets/order_actions.dart lib/widgets/bottomsheets/new_order_alert.bottomsheet.dart \
+            lib/models/order.dart > machine.txt 2>&1
+          code=$?
+          echo "analyze exit code: $code"
+          echo "lines: $(wc -l < machine.txt)"
+          grep -c '^ERROR' machine.txt | sed 's/^/ERROR count: /'
+          grep -c '^WARNING' machine.txt | sed 's/^/WARNING count: /'
+          grep -c '^INFO' machine.txt | sed 's/^/INFO count: /'
+          while IFS='|' read -r sev type rule file line col len msg; do
+            [ -z "$sev" ] && continue
+            echo "::notice title=analyze $sev::$file:$line $rule $msg"
+          done < machine.txt
+          exit $code
