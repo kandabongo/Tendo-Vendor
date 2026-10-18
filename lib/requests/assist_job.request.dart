@@ -71,7 +71,7 @@ class AssistJobRequest extends HttpService {
     try {
       final response = await _send(Api.assistAcceptAssignment, orderId);
       if (response == null) {
-        return _afterNoAnswer(orderId);
+        return await _afterNoAnswer(orderId);
       }
 
       final body = response.data is Map ? response.data as Map : const {};
