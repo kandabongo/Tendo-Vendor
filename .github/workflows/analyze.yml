@@ -20,21 +20,23 @@ jobs:
       - run: flutter pub get
       - name: Analyze changed files; every finding becomes an annotation
         run: |
-          flutter --version | head -2
+          flutter --version | head -1
           set +e
-          flutter analyze --no-fatal-infos --no-fatal-warnings --format=machine \
+          flutter analyze --no-fatal-infos --no-fatal-warnings \
             lib/requests/assist_job.request.dart lib/services/assist_job.service.dart \
             lib/view_models/order_details.vm.dart lib/views/pages/order/orders_details.page.dart \
             lib/views/pages/order/widgets/order_actions.dart lib/widgets/bottomsheets/new_order_alert.bottomsheet.dart \
-            lib/models/order.dart > machine.txt 2>&1
+            lib/models/order.dart > out.txt 2>&1
           code=$?
           echo "analyze exit code: $code"
-          echo "lines: $(wc -l < machine.txt)"
-          grep -c '^ERROR' machine.txt | sed 's/^/ERROR count: /'
-          grep -c '^WARNING' machine.txt | sed 's/^/WARNING count: /'
-          grep -c '^INFO' machine.txt | sed 's/^/INFO count: /'
-          while IFS='|' read -r sev type rule file line col len msg; do
-            [ -z "$sev" ] && continue
-            echo "::notice title=analyze $sev::$file:$line $rule $msg"
-          done < machine.txt
+          echo "::notice title=analyze exit code::$code"
+          grep -c ' error • ' out.txt | sed 's/^/errors: /'
+          grep -c ' warning • ' out.txt | sed 's/^/warnings: /'
+          grep -c ' info • ' out.txt | sed 's/^/infos: /'
+          while IFS= read -r line; do
+            case "$line" in
+              *' • '*) echo "::notice title=analyze::$(echo "$line" | sed 's/^ *//' | cut -c1-400)" ;;
+              *issue*|*"No issues"*) echo "::notice title=analyze summary::$line" ;;
+            esac
+          done < out.txt
           exit $code
