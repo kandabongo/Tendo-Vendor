@@ -40,9 +40,20 @@ jobs:
             lib/views/pages/order/orders_details.page.dart \
             lib/views/pages/order/widgets/order_actions.dart \
             lib/widgets/bottomsheets/new_order_alert.bottomsheet.dart \
-            lib/models/order.dart 2>&1 | tee analyze.txt
+            lib/models/order.dart > analyze.txt 2>&1 || true
+          cat analyze.txt
           echo '### flutter analyze' >> "$GITHUB_STEP_SUMMARY"
           tail -40 analyze.txt >> "$GITHUB_STEP_SUMMARY"
+          # Publish the result as annotations so it can be read without the raw log
+          ERR=$(grep -c '^ *error •' analyze.txt || true)
+          WARN=$(grep -c '^ *warning •' analyze.txt || true)
+          INFO=$(grep -c '^ *info •' analyze.txt || true)
+          echo "::notice title=ANALYZE RESULT::errors=$ERR warnings=$WARN infos=$INFO | $(tail -1 analyze.txt)"
+          grep -E '^ *(error|warning|info) •' analyze.txt | head -40 | while IFS= read -r line; do
+            kind=$(echo "$line" | sed -E 's/^ *([a-z]+) •.*/\1/')
+            case "$kind" in error) lvl=error;; warning) lvl=warning;; *) lvl=notice;; esac
+            echo "::$lvl title=analyze $kind::$(echo "$line" | cut -c1-300)"
+          done
       - name: Build release APK
         run: flutter build apk --release
       - name: Build release App Bundle
@@ -51,13 +62,21 @@ jobs:
         run: |
           echo "### Signing certificate of app-release.aab" >> $GITHUB_STEP_SUMMARY
           keytool -printcert -jarfile build/app/outputs/bundle/release/app-release.aab | grep -E "SHA1|SHA256|Owner" | tee -a $GITHUB_STEP_SUMMARY
+      - name: Report build facts (package, version, signing)
+        run: |
+          AAPT=$(ls $ANDROID_HOME/build-tools/*/aapt2 | sort -V | tail -1)
+          B=$($AAPT dump badging build/app/outputs/flutter-apk/app-release.apk | head -1)
+          SIG=$(keytool -printcert -jarfile build/app/outputs/flutter-apk/app-release.apk | grep -E "SHA256" | head -1)
+          echo "::notice title=APK FACTS::$B | $SIG | $(ls -l build/app/outputs/flutter-apk/app-release.apk | awk '{print $5}') bytes"
+          AABSIG=$(keytool -printcert -jarfile build/app/outputs/bundle/release/app-release.aab | grep -E "SHA256" | head -1)
+          echo "::notice title=AAB FACTS::$AABSIG | $(ls -l build/app/outputs/bundle/release/app-release.aab | awk '{print $5}') bytes"
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: customer-release-apk
+          name: vendor-release-apk
           path: build/app/outputs/flutter-apk/app-release.apk
       - name: Upload App Bundle artifact
         uses: actions/upload-artifact@v4
         with:
-          name: customer-release-aab
+          name: vendor-release-aab
           path: build/app/outputs/bundle/release/app-release.aab
