@@ -4,6 +4,8 @@ import 'package:fuodz/constants/app_images.dart';
 import 'package:fuodz/constants/app_strings.dart';
 import 'package:fuodz/extensions/dynamic.dart';
 import 'package:fuodz/models/order.dart';
+import 'package:fuodz/requests/assist_job.request.dart';
+import 'package:fuodz/services/assist_job.service.dart';
 import 'package:fuodz/requests/order.request.dart';
 import 'package:fuodz/views/pages/order/orders_details.page.dart';
 import 'package:fuodz/widgets/busy_indicator.dart';
@@ -27,6 +29,37 @@ class _NewOrderAlertBottomsheetState extends State<NewOrderAlertBottomsheet> {
   static const MethodChannel _alertChannel = MethodChannel(
     'notifications.manage',
   );
+
+  //true while an accept / decline request is on the wire (blocks repeated taps)
+  bool _assistBusy = false;
+
+  //Accept or decline an Assist offer straight from the ringing alert. The server decides.
+  Future<void> _answerAssistOffer(Order order, {required bool accept}) async {
+    if (_assistBusy) return;
+    setState(() => _assistBusy = true);
+    stopNotificationSound();
+
+    final result =
+        accept
+            ? await AssistJobService.accept(order.id)
+            : await AssistJobService.decline(order.id);
+
+    if (!mounted) return;
+    setState(() => _assistBusy = false);
+
+    if (result.outcome == AssistJobOutcome.accepted) {
+      //the job is ours: carry on in the normal order screen
+      final job = result.order ?? order;
+      Navigator.of(context).pop();
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => OrderDetailsPage(order: job)),
+      );
+    } else if (result.isFinal) {
+      //declined, expired, taken by someone else, or no funds: the offer is over
+      Navigator.of(context).pop();
+    }
+    //network / server trouble: stay here so the provider can try again
+  }
 
   @override
   void initState() {
@@ -109,6 +142,26 @@ class _NewOrderAlertBottomsheetState extends State<NewOrderAlertBottomsheet> {
                       "Delivery Address".tr().text.semiBold.make(),
                       5.heightBox,
                       "${order.deliveryAddress?.address}".text.make(),
+                    ]),
+
+                  //Assist offer: answer it right here
+                  if (order.isAssistOffer)
+                    HStack([
+                      CustomButton(
+                        color: Colors.red,
+                        title: "Reject".tr(),
+                        loading: _assistBusy,
+                        onPressed:
+                            () => _answerAssistOffer(order, accept: false),
+                      ).expand(),
+                      10.widthBox,
+                      CustomButton(
+                        color: Colors.green,
+                        title: "Accept".tr(),
+                        loading: _assistBusy,
+                        onPressed:
+                            () => _answerAssistOffer(order, accept: true),
+                      ).expand(),
                     ]),
 
                   //

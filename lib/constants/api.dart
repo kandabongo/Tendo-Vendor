@@ -34,6 +34,9 @@ class Api {
   static const verifyOtp = "/otp/verify";
 
   static const orders = "/orders";
+  //Assist job offers (dispatch -> provider)
+  static const assistAcceptAssignment = "/assist/order/assignment/accept";
+  static const assistRejectAssignment = "/assist/order/assignment/reject";
   static const chat = "/chat/notification";
   static const users = "/users";
   static const productCategories = "/categories";

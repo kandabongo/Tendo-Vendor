@@ -72,6 +72,7 @@ class Order {
     required this.photo,
     required this.attachments,
     required this.fees,
+    this.vendorTypeId,
   });
 
   int id;
@@ -94,6 +95,7 @@ class Order {
   int? deliveryAddressId;
   int? paymentMethodId;
   int? vendorId;
+  int? vendorTypeId;
   int userId;
   int? driverId;
   String? pickupDate;
@@ -189,6 +191,10 @@ class Order {
           json["vendor_id"] == null
               ? null
               : int.parse(json["vendor_id"].toString()),
+      vendorTypeId:
+          json["vendor_type_id"] == null
+              ? null
+              : int.tryParse(json["vendor_type_id"].toString()),
       userId: int.parse(json["user_id"].toString()),
       driverId:
           json["driver_id"] == null
@@ -356,6 +362,18 @@ class Order {
   bool get isSerice =>
       vendor?.vendorType != null && vendor?.vendorType?.slug == "service";
   bool get isScheduled => status == "scheduled";
+
+  /// Vendor type id of the Assist (home services) vertical.
+  static const int assistVendorTypeId = 5;
+
+  /// An Assist job that has been offered to providers but not yet accepted by anyone.
+  /// Such a job is accepted/declined through the dedicated Assist endpoints, which make the
+  /// server the only authority on assignment and on the wallet check. Every other order
+  /// (food, parcel, taxi, a booking made directly with a provider...) keeps the old workflow.
+  bool get isAssistOffer =>
+      vendorId == null &&
+      vendorTypeId == assistVendorTypeId &&
+      ["pending", "searching"].contains(status);
 
   //status => 'pending','preparing','enroute','failed','cancelled','delivered'
   get canEditStatus =>

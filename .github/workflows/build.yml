@@ -30,6 +30,19 @@ jobs:
         run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
       - name: Install dependencies
         run: flutter pub get
+      - name: Analyze (compile check of the Assist accept/reject files)
+        continue-on-error: true
+        run: |
+          flutter analyze --no-fatal-infos --no-fatal-warnings \
+            lib/requests/assist_job.request.dart \
+            lib/services/assist_job.service.dart \
+            lib/view_models/order_details.vm.dart \
+            lib/views/pages/order/orders_details.page.dart \
+            lib/views/pages/order/widgets/order_actions.dart \
+            lib/widgets/bottomsheets/new_order_alert.bottomsheet.dart \
+            lib/models/order.dart 2>&1 | tee analyze.txt
+          echo '### flutter analyze' >> "$GITHUB_STEP_SUMMARY"
+          tail -40 analyze.txt >> "$GITHUB_STEP_SUMMARY"
       - name: Build release APK
         run: flutter build apk --release
       - name: Build release App Bundle

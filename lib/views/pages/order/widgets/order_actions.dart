@@ -32,7 +32,8 @@ class OrderActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    bool ispending = order.status == "pending";
+    //an Assist job offer (still unassigned) shows Accept / Reject like a pending order
+    bool ispending = order.status == "pending" || order.isAssistOffer;
     bool actionsNeeded =
         !["failed", "cancelled", "delivered"].contains(order.status);
     return SafeArea(

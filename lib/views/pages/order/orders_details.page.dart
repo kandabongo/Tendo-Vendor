@@ -293,8 +293,14 @@ class OrderDetailsPage extends StatelessWidget {
             busy: vm.isBusy || vm.busy(vm.order),
             onEditPressed: vm.changeOrderStatus,
             onAssignPressed: vm.assignOrder,
-            onCancelledPressed: vm.processOrderCancellation,
-            onAcceptPressed: () => vm.processStatusUpdate('preparing'),
+            onCancelledPressed:
+                vm.order.isAssistOffer
+                    ? vm.declineAssistJob
+                    : vm.processOrderCancellation,
+            onAcceptPressed:
+                vm.order.isAssistOffer
+                    ? vm.acceptAssistJob
+                    : () => vm.processStatusUpdate('preparing'),
             onPrintPressed: () => vm.printOrder(),
           ),
         );

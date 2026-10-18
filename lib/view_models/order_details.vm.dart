@@ -7,7 +7,9 @@ import 'package:fuodz/constants/app_ui_settings.dart';
 import 'package:fuodz/constants/printer_values.dart';
 import 'package:fuodz/models/delivery_address.dart';
 import 'package:fuodz/models/order.dart';
+import 'package:fuodz/requests/assist_job.request.dart';
 import 'package:fuodz/requests/order.request.dart';
+import 'package:fuodz/services/assist_job.service.dart';
 import 'package:fuodz/services/app.service.dart';
 import 'package:fuodz/services/chat.service.dart';
 import 'package:fuodz/services/order_details_websocket.service.dart';
@@ -208,6 +210,61 @@ class OrderDetailsViewModel extends MyBaseViewModel {
       print("Error ==> $error");
       setErrorForObject(order, error);
       viewContext.showToast(msg: "$error", bgColor: Colors.red);
+    }
+    setBusyForObject(order, false);
+  }
+
+  //Assist job offers: accepted / declined through the dedicated endpoints. The server checks the
+  //wallet, assigns the provider and guarantees one winner; the app only reports the outcome.
+  bool _assistActionRunning = false;
+
+  Future<void> acceptAssistJob() async {
+    if (_assistActionRunning) return; //repeated taps
+    _assistActionRunning = true;
+    setBusyForObject(order, true);
+    try {
+      final result = await AssistJobService.accept(order.id);
+      if (result.outcome == AssistJobOutcome.accepted) {
+        changed = true;
+        clearErrors();
+        if (result.order != null) {
+          order = result.order!;
+        } else {
+          await fetchOrderDetails();
+        }
+      } else if (result.isFinal) {
+        //offer is gone (no funds / expired / taken): nothing more to do on this screen
+        changed = true;
+        setBusyForObject(order, false);
+        onBackPressed();
+        return;
+      }
+    } catch (error) {
+      print("Error ==> $error");
+      viewContext.showToast(msg: "$error", bgColor: Colors.red);
+    } finally {
+      _assistActionRunning = false;
+    }
+    setBusyForObject(order, false);
+  }
+
+  Future<void> declineAssistJob() async {
+    if (_assistActionRunning) return;
+    _assistActionRunning = true;
+    setBusyForObject(order, true);
+    try {
+      final result = await AssistJobService.decline(order.id);
+      if (result.isFinal) {
+        changed = true;
+        setBusyForObject(order, false);
+        onBackPressed();
+        return;
+      }
+    } catch (error) {
+      print("Error ==> $error");
+      viewContext.showToast(msg: "$error", bgColor: Colors.red);
+    } finally {
+      _assistActionRunning = false;
     }
     setBusyForObject(order, false);
   }
