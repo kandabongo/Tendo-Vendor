@@ -10,6 +10,7 @@ import 'package:fuodz/utils/ui_spacer.dart';
 import 'package:fuodz/utils/utils.dart';
 import 'package:fuodz/view_models/order_details.vm.dart';
 import 'package:fuodz/views/pages/order/widgets/assist_extras.view.dart';
+import 'package:fuodz/views/pages/order/widgets/assist_transport.view.dart';
 import 'package:fuodz/views/pages/order/widgets/order_actions.dart';
 import 'package:fuodz/views/pages/order/widgets/order_address.view.dart';
 import 'package:fuodz/views/pages/order/widgets/order_attachment.view.dart';
@@ -113,6 +114,16 @@ class OrderDetailsPage extends StatelessWidget {
 
                           // either products/package details
                           orderSection(OrderDetailsItemsView(vm), context),
+
+                          //Assist: provider transport (own vehicle / Tendo Taxi)
+                          if (vm.order.isAssistJob && vm.order.vendorId != null)
+                            orderSection(
+                              AssistTransportView(
+                                key: ValueKey("assist-transport-${vm.order.id}-${vm.order.status}"),
+                                order: vm.order,
+                              ),
+                              context,
+                            ),
 
                           //Assist: job charges, additional work and materials
                           if (vm.order.isAssistJob && vm.order.vendorId != null)

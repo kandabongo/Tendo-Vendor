@@ -5,6 +5,7 @@ import 'package:custom_faqs/custom_faqs.dart';
 import 'package:flutter/material.dart';
 import 'package:fuodz/views/pages/profile/account_delete.page.dart';
 import 'package:fuodz/views/pages/profile/printer_settings.page.dart';
+import 'package:fuodz/views/pages/profile/provider_mobility.page.dart';
 import 'package:fuodz/views/pages/splash.page.dart';
 import 'package:fuodz/constants/api.dart';
 import 'package:fuodz/constants/app_routes.dart';
@@ -180,5 +181,9 @@ class ProfileViewModel extends MyBaseViewModel {
 
   openPrinterSettings() {
     viewContext.nextPage(PrinterSettingsPage());
+  }
+
+  openMobilitySettings() {
+    viewContext.nextPage(ProviderMobilityPage());
   }
 }
