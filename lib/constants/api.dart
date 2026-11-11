@@ -37,6 +37,13 @@ class Api {
   //Assist job offers (dispatch -> provider)
   static const assistAcceptAssignment = "/assist/order/assignment/accept";
   static const assistRejectAssignment = "/assist/order/assignment/reject";
+  //Assist Provider Mobility (own vehicle / Tendo Taxi)
+  static const assistProviderMobility = "/assist/provider/mobility";
+  static const assistTransportOwn = "/assist/order/transport/own";
+  static const assistTransportTaxiLink = "/assist/order/transport/taxi/link";
+  static const assistTransportTaxiUnlink = "/assist/order/transport/taxi/unlink";
+  static String assistTransportQuote(int orderId) =>
+      "/assist/order/$orderId/transport/quote";
   static const chat = "/chat/notification";
   static const users = "/users";
   static const productCategories = "/categories";
