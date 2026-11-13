@@ -6,6 +6,7 @@ import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:fuodz/constants/api.dart';
 import 'package:fuodz/constants/app_colors.dart';
 import 'package:fuodz/constants/app_page_settings.dart';
+import 'package:fuodz/constants/app_strings.dart';
 import 'package:fuodz/constants/sizes.dart';
 import 'package:fuodz/models/address.dart';
 import 'package:fuodz/services/custom_form_builder_validator.service.dart';
@@ -259,12 +260,14 @@ class RegisterPage extends StatelessWidget {
                         decoration: inputDec.copyWith(labelText: "Name".tr()),
                       ),
 
-                      FormBuilderTextField(
-                        name: "email",
-                        keyboardType: TextInputType.emailAddress,
-                        validator: CustomFormBuilderValidator.email,
-                        decoration: inputDec.copyWith(labelText: "Email".tr()),
-                      ).py20(),
+                      // Phone-first (Firebase OTP): owner email is optional and hidden.
+                      if (!AppStrings.isFirebaseOtp)
+                        FormBuilderTextField(
+                          name: "email",
+                          keyboardType: TextInputType.emailAddress,
+                          validator: CustomFormBuilderValidator.email,
+                          decoration: inputDec.copyWith(labelText: "Email".tr()),
+                        ).py20(),
 
                       FormBuilderTextField(
                         name: "phone",
@@ -287,22 +290,24 @@ class RegisterPage extends StatelessWidget {
                         ),
                       ),
 
-                      FormBuilderTextField(
-                        name: "password",
-                        obscureText: vm.hidePassword,
-                        validator: CustomFormBuilderValidator.required,
-                        decoration: inputDec.copyWith(
-                          labelText: "Password".tr(),
-                          suffixIcon: Icon(
-                            vm.hidePassword
-                                ? FlutterIcons.ios_eye_ion
-                                : FlutterIcons.ios_eye_off_ion,
-                          ).onInkTap(() {
-                            vm.hidePassword = !vm.hidePassword;
-                            vm.notifyListeners();
-                          }),
-                        ),
-                      ).py20(),
+                      // Phone-first (Firebase OTP): password is not required.
+                      if (!AppStrings.isFirebaseOtp)
+                        FormBuilderTextField(
+                          name: "password",
+                          obscureText: vm.hidePassword,
+                          validator: CustomFormBuilderValidator.required,
+                          decoration: inputDec.copyWith(
+                            labelText: "Password".tr(),
+                            suffixIcon: Icon(
+                              vm.hidePassword
+                                  ? FlutterIcons.ios_eye_ion
+                                  : FlutterIcons.ios_eye_off_ion,
+                            ).onInkTap(() {
+                              vm.hidePassword = !vm.hidePassword;
+                              vm.notifyListeners();
+                            }),
+                          ),
+                        ).py20(),
 
                       FormBuilderCheckbox(
                         name: "agreed",
