@@ -14,6 +14,7 @@ import 'package:fuodz/services/app.service.dart';
 import 'package:fuodz/services/chat.service.dart';
 import 'package:fuodz/services/order_details_websocket.service.dart';
 import 'package:fuodz/services/printer.service.dart';
+import 'package:fuodz/services/provider_location.service.dart';
 import 'package:fuodz/view_models/base.view_model.dart';
 import 'package:fuodz/views/pages/order/widgets/order_printer_selector.view.dart';
 import 'package:fuodz/widgets/bottomsheets/assign_order.bottomsheet.dart';
@@ -175,6 +176,10 @@ class OrderDetailsViewModel extends MyBaseViewModel {
       //beaware a change as occurred
       changed = true;
       clearErrors();
+      // Cancelled -> stop any live GPS sharing for this job.
+      if (order.isAssistJob) {
+        ProviderLocationService.instance.stopForOrder(order.id);
+      }
     } catch (error) {
       print("Error ==> $error");
       setErrorForObject(order, error);
@@ -199,6 +204,24 @@ class OrderDetailsViewModel extends MyBaseViewModel {
     );
   }
 
+  // Assist live-GPS: share only while the job is operationally active.
+  static const _assistActiveStatuses = [
+    'enroute', 'arrived', 'started', 'in_progress', 'preparing', 'ready'
+  ];
+  static const _assistDoneStatuses = [
+    'completed', 'delivered', 'cancelled', 'failed'
+  ];
+
+  void _syncAssistLocationSharing(String status) {
+    if (!order.isAssistJob) return;
+    final s = status.toLowerCase();
+    if (_assistActiveStatuses.contains(s)) {
+      ProviderLocationService.instance.startForOrder(order.id);
+    } else if (_assistDoneStatuses.contains(s)) {
+      ProviderLocationService.instance.stopForOrder(order.id);
+    }
+  }
+
   processStatusUpdate(String value) async {
     setBusyForObject(order, true);
     try {
@@ -206,6 +229,8 @@ class OrderDetailsViewModel extends MyBaseViewModel {
       //beaware a change as occurred
       changed = true;
       clearErrors();
+      // Start/stop live GPS according to the new operational state.
+      _syncAssistLocationSharing(value);
     } catch (error) {
       print("Error ==> $error");
       setErrorForObject(order, error);
@@ -231,6 +256,10 @@ class OrderDetailsViewModel extends MyBaseViewModel {
           order = result.order!;
         } else {
           await fetchOrderDetails();
+        }
+        // Accepted an Assist job -> begin sharing live GPS for this operation.
+        if (order.isAssistJob) {
+          ProviderLocationService.instance.startForOrder(order.id);
         }
       } else if (result.isFinal) {
         //offer is gone (no funds / expired / taken): nothing more to do on this screen

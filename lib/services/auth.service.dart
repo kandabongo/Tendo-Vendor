@@ -5,6 +5,7 @@ import 'package:fuodz/constants/app_strings.dart';
 import 'package:fuodz/models/user.dart';
 import 'package:fuodz/models/vendor.dart';
 import 'package:fuodz/services/firebase.service.dart';
+import 'package:fuodz/services/provider_location.service.dart';
 import 'package:singleton/singleton.dart';
 
 import 'http.service.dart';
@@ -129,6 +130,10 @@ class AuthServices {
   ///
   //
   static Future<void> logout() async {
+    // stop any live GPS sharing before clearing the session
+    try {
+      await ProviderLocationService.instance.stopAll();
+    } catch (_) {}
     await HttpService().getCacheManager().clearAll();
     await LocalStorageService.prefs!.clear();
     await LocalStorageService.prefs!.setBool(AppStrings.firstTimeOnApp, false);
