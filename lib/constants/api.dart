@@ -17,6 +17,8 @@ class Api {
   }
 
   static const appSettings = "/app/settings";
+  // provider live-location sync during an active Assist operation
+  static const providerLocationSync = "/provider/location/sync";
   static const appOnboardings = "/app/onboarding?type=vendor";
   static const faqs = "/app/faqs?type=vendor";
 
