@@ -1,7 +1,9 @@
 import 'dart:io';
 
 import 'package:country_picker/country_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fuodz/constants/app_strings.dart';
 import 'package:fuodz/extensions/string.dart';
 import 'package:fuodz/models/vendor_type.dart';
 import 'package:fuodz/requests/auth.request.dart';
@@ -10,6 +12,7 @@ import 'package:fuodz/services/alert.service.dart';
 import 'package:fuodz/services/geocoder.service.dart';
 import 'package:fuodz/services/phone_util.service.dart';
 import 'package:fuodz/traits/qrcode_scanner.trait.dart';
+import 'package:fuodz/widgets/bottomsheets/account_verification_entry.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:localize_and_translate/localize_and_translate.dart';
 import 'base.view_model.dart';
@@ -133,11 +136,14 @@ class RegisterViewModel extends MyBaseViewModel with QrcodeScannerTrait {
     }
   }
 
+  // Phone-first (Firebase OTP) state.
+  String? accountPhoneNumber;
+  String? _firebaseIdToken;
+  Map<String, dynamic>? _pendingParams;
+
   void processLogin() async {
     // Validate returns true if the form is valid, otherwise false.
     if (formBuilderKey.currentState!.saveAndValidate()) {
-      //
-
       Map<String, dynamic> params = Map.from(
         formBuilderKey.currentState!.value,
       );
@@ -149,35 +155,111 @@ class RegisterViewModel extends MyBaseViewModel with QrcodeScannerTrait {
       params["address"] = address;
       params["latitude"] = latitude;
       params["longitude"] = longitude;
+      accountPhoneNumber = params["phone"];
 
-      //
-      setBusy(true);
-
-      try {
-        final apiResponse = await _authRequest.registerRequest(
-          vals: params,
-          docs: selectedDocuments,
-          logo: logo,
-          featureImage: featureImage,
-        );
-
-        if (apiResponse.allGood) {
-          await AlertService.success(
-            title: "Become a partner".tr(),
-            text: "${apiResponse.message}",
-          );
-          //reset
-          resetValues();
-          //
-        } else {
-          toastError("${apiResponse.message}");
-        }
-      } catch (error) {
-        toastError("$error");
+      // Phone-first: verify the owner's number with Firebase OTP before
+      // registering. The provider account then lands PENDING review.
+      if (AppStrings.isFirebaseOtp) {
+        _pendingParams = params;
+        processFirebaseOTPVerification();
+      } else {
+        await _submitRegistration(params);
       }
-
-      setBusy(false);
     }
+  }
+
+  // Send the OTP via Firebase for the entered owner phone number.
+  processFirebaseOTPVerification() async {
+    setBusy(true);
+    await FirebaseAuth.instance.verifyPhoneNumber(
+      phoneNumber: accountPhoneNumber,
+      verificationCompleted: (PhoneAuthCredential credential) async {
+        try {
+          final userCredential =
+              await FirebaseAuth.instance.signInWithCredential(credential);
+          _firebaseIdToken = await userCredential.user?.getIdToken();
+        } catch (_) {}
+        setBusy(false);
+        await _submitRegistration(_pendingParams!, idToken: _firebaseIdToken);
+      },
+      verificationFailed: (FirebaseAuthException e) {
+        setBusy(false);
+        final msg = e.code == 'invalid-phone-number'
+            ? "Invalid Phone Number".tr()
+            : (e.message ?? "Error".tr());
+        AlertService.error(title: "Become a partner".tr(), text: msg);
+      },
+      codeSent: (String verificationId, int? resendToken) {
+        firebaseVerificationId = verificationId;
+        setBusy(false);
+        showVerificationEntry();
+      },
+      codeAutoRetrievalTimeout: (String verificationId) {},
+    );
+  }
+
+  // Bottom sheet for manual SMS-code entry.
+  void showVerificationEntry() {
+    Navigator.of(viewContext).push(
+      MaterialPageRoute(
+        builder: (context) => AccountVerificationEntry(
+          vm: this,
+          onSubmit: (smsCode) {
+            Navigator.of(viewContext).pop();
+            verifyFirebaseOTP(smsCode);
+          },
+        ),
+      ),
+    );
+  }
+
+  void verifyFirebaseOTP(String smsCode) async {
+    setBusy(true);
+    try {
+      final phoneAuthCredential = PhoneAuthProvider.credential(
+        verificationId: firebaseVerificationId!,
+        smsCode: smsCode,
+      );
+      final userCredential =
+          await FirebaseAuth.instance.signInWithCredential(phoneAuthCredential);
+      _firebaseIdToken = await userCredential.user?.getIdToken();
+      await _submitRegistration(_pendingParams!, idToken: _firebaseIdToken);
+    } catch (error) {
+      setBusy(false);
+      toastError("$error");
+    }
+  }
+
+  // Submit the registration to /vendor/register, attaching the verified token.
+  Future<void> _submitRegistration(
+    Map<String, dynamic> params, {
+    String? idToken,
+  }) async {
+    setBusy(true);
+    try {
+      if (idToken != null && idToken.isNotEmpty) {
+        params["firebase_id_token"] = idToken;
+      }
+      final apiResponse = await _authRequest.registerRequest(
+        vals: params,
+        docs: selectedDocuments,
+        logo: logo,
+        featureImage: featureImage,
+      );
+
+      if (apiResponse.allGood) {
+        await AlertService.success(
+          title: "Become a partner".tr(),
+          text: "${apiResponse.message}",
+        );
+        resetValues();
+      } else {
+        toastError("${apiResponse.message}");
+      }
+    } catch (error) {
+      toastError("$error");
+    }
+    setBusy(false);
   }
 
   //
