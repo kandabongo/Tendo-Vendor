@@ -6,6 +6,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - name: Set up Java
@@ -70,6 +72,18 @@ jobs:
           echo "::notice title=APK FACTS::$B | $SIG | $(ls -l build/app/outputs/flutter-apk/app-release.apk | awk '{print $5}') bytes"
           AABSIG=$(keytool -printcert -jarfile build/app/outputs/bundle/release/app-release.aab | grep -E "SHA256" | head -1)
           echo "::notice title=AAB FACTS::$AABSIG | $(ls -l build/app/outputs/bundle/release/app-release.aab | awk '{print $5}') bytes"
+      - name: Publish signed APK as a Release (one-tap phone install)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: phone-registration-mobility-${{ github.run_number }}
+          name: Vendor app - phone registration + Assist mobility (build ${{ github.run_number }})
+          body: |
+            Signed release build of the Tendo Vendor app with phone-first registration
+            and Assist provider mobility (own vehicle / Tendo Taxi transport).
+            Install over the current app (same signing key - no uninstall, keeps login).
+          files: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:

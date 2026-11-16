@@ -47,6 +47,12 @@ class _ProfilePageState extends State<ProfilePage>
                             onPressed: model.openPrinterSettings,
                             prefix: Icon(FlutterIcons.printer_ant),
                           ),
+                          //assist provider mobility (own vehicle / Tendo Taxi)
+                          MenuItem(
+                            title: "Provider Mobility".tr(),
+                            onPressed: model.openMobilitySettings,
+                            prefix: Icon(Icons.directions_car),
+                          ),
                           //
                           MenuItem(
                             title: "Language".tr(),
